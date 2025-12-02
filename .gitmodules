@@ -1,0 +1,3 @@
+[submodule "src/main/java/org/bf/mapservice/mapservice/global"]
+	path = src/main/java/org/bf/mapservice/mapservice/global
+	url = https://github.com/Barrier-Free-Friends/submodule.git
