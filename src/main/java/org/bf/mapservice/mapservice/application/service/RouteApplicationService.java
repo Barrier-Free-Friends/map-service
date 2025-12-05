@@ -79,16 +79,17 @@ public class RouteApplicationService {
             NodeCost current = pq.poll();
             Long currentNodeId = current.nodeId();
 
-            if (Objects.equals(currentNodeId, endNodeId)) {
-                break;
-            }
-
+            // 이미 더 짧은 거리로 방문한 적이 있으면 스킵
             if (current.cost() > dist.getOrDefault(currentNodeId, Double.POSITIVE_INFINITY)) {
                 continue;
             }
 
-            List<MapEdge> neighbors = adjacency.getOrDefault(currentNodeId, List.of());
-            for (MapEdge edge : neighbors) {
+            // 목적지에 도달했으면 조기 종료 (prev는 이미 세팅된 상태)
+            if (Objects.equals(currentNodeId, endNodeId)) {
+                break;
+            }
+
+            for (MapEdge edge : adjacency.getOrDefault(currentNodeId, List.of())) {
                 if (!edge.isPassableFor(profile)) {
                     continue;
                 }
@@ -99,7 +100,7 @@ public class RouteApplicationService {
 
                 if (nextCost < dist.getOrDefault(nextNodeId, Double.POSITIVE_INFINITY)) {
                     dist.put(nextNodeId, nextCost);
-                    prev.put(nextNodeId, currentNodeId);
+                    prev.put(nextNodeId, currentNodeId);    // ← 이 부분이 핵심
                     pq.offer(new NodeCost(nextNodeId, nextCost));
                 }
             }
@@ -113,19 +114,26 @@ public class RouteApplicationService {
             Long endNodeId,
             Map<Long, Long> prev
     ) {
+        // start != end인데 end로 가는 이전 노드 정보가 없다 → 경로 없음
+        if (!Objects.equals(startNodeId, endNodeId) && !prev.containsKey(endNodeId)) {
+            return List.of();
+        }
+
         List<Long> path = new ArrayList<>();
         Long current = endNodeId;
 
-        if (!Objects.equals(startNodeId, endNodeId) && !prev.containsKey(endNodeId)) {
-            return List.of(); // 경로 없음
-        }
-
+        // end에서 start까지 거슬러 올라가기
         while (current != null) {
             path.add(current);
             if (Objects.equals(current, startNodeId)) {
                 break;
             }
             current = prev.get(current);
+
+            // 방어 코드: 중간에 끊기면 경로 없음으로 처리
+            if (current == null) {
+                return List.of();
+            }
         }
 
         Collections.reverse(path);
