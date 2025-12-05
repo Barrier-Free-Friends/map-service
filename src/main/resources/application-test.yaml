@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: map-service
+
+  cloud:
+    config:
+      enabled: false
+
+
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:test
+    username:
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+eureka:
+  client:
+    enabled: false
