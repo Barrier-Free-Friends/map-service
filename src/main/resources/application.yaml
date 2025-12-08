@@ -6,7 +6,6 @@ spring:
     config:
       enabled: false
 
-
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -16,11 +15,18 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    defer-datasource-initialization: true  # ★ JPA가 먼저, schema.sql 나중
     properties:
       hibernate:
         format_sql: true
         show_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+#  sql:
+#    init:
+#      mode: always
+#      schema-locations: classpath:/db/schema.sql
+
 eureka:
   client:
     enabled: false
