@@ -7,7 +7,7 @@ env:
   # AWS 및 ECR 설정
   AWS_REGION: ap-northeast-2                       # 본인의 AWS 리전으로 변경
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}    # GitHub Secrets에 AWS 계정 ID 추가
-  ECR_REPOSITORY: barrier-free-friends/서비스명    # ECR 저장소 이름
+  ECR_REPOSITORY: barrier-free-friends/map-server    # ECR 저장소 이름
   VERSION: ${{ github.sha }}                       # Commit SHA를 버전으로 사용
 
   # ⚙️ ECS 서비스 설정 (사전 생성 필요)
@@ -62,10 +62,10 @@ jobs:
           # 2. Spring Boot JAR 파일 빌드 및 Docker 이미지 빌드
           chmod +x gradlew
           ./gradlew bootJar
-          docker build -t 서비스명-service-container .
+          docker build -t map-service-container .
 
           # 3. ECR 경로로 리태그
-          docker tag 서비스명-service-container:latest $IMAGE_URI
+          docker tag map-service-container:latest $IMAGE_URI
 
       # ECR로 이미지 푸시 (GHCR push 대체)
       - name: Publish container image to ECR
