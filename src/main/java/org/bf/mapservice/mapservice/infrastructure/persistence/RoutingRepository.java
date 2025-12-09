@@ -78,4 +78,23 @@ public class RoutingRepository {
                 )
         );
     }
+
+    public RoutePointDto findVertexPoint(long vertexId) {
+        String sql = """
+            SELECT
+              ST_Y(ST_Transform(the_geom, 4326)) AS lat,
+              ST_X(ST_Transform(the_geom, 4326)) AS lng
+            FROM planet_osm_line_vertices_pgr
+            WHERE id = :id
+            """;
+
+        Map<String, Object> params = Map.of("id", vertexId);
+
+        return jdbcTemplate.queryForObject(sql, params,
+                (rs, rowNum) -> new RoutePointDto(
+                        rs.getDouble("lat"),
+                        rs.getDouble("lng")
+                ));
+    }
+
 }

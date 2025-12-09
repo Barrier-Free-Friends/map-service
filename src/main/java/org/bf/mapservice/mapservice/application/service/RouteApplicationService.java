@@ -46,6 +46,14 @@ public class RouteApplicationService {
                 endVertex,
                 waysView
         );
+        if (startVertex == endVertex) {
+            RoutePointDto point = routingRepository.findVertexPoint(startVertex);
+            return List.of(point);
+        }
+
+        System.out.println("DEBUG route: mobilityType=" + query.mobilityType()
+                + ", startVertex=" + startVertex
+                + ", endVertex=" + endVertex);
 
         if (!routePoints.isEmpty()) {
             //프로필 기준으로도 경로를 찾았다 → 정상 반환
