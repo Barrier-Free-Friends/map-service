@@ -18,6 +18,8 @@ spring:
         show_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  config:
+    import: 'optional:configserver: '
   cloud:
     config:
       discovery:
