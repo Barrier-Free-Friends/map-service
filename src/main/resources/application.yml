@@ -54,3 +54,5 @@ springdoc:
     doc-expansion:
   paths-to-match:
     - /**
+server:
+  port: 3334
