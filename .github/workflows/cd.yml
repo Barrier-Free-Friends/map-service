@@ -84,7 +84,7 @@ jobs:
             ENV_DB_USERNAME=${{ secrets.DB_USERNAME }}
             ENV_DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             ENV_DB_DDL_AUTO=update
-            # 그 외 .env 파일에 정의된 환경 변수 세팅
+          # 그 외 .env 파일에 정의된 환경 변수 세팅
 
       # ECS 서비스 배포 (최종 단계)
       - name: Deploy to Amazon ECS Service
