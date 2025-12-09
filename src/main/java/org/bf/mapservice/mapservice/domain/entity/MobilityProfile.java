@@ -25,6 +25,11 @@ public class MobilityProfile {
 
     public static MobilityProfile from(MobilityType mobilityType) {
         return switch (mobilityType) {
+            case PEDESTRIAN -> MobilityProfile.builder()
+                    .avoidStairs(false)
+                    .avoidHighSlope(false)
+                    .allowVehicleRoad(false)
+                    .build();
             case WHEELCHAIR -> MobilityProfile.builder()
                     .avoidStairs(true)
                     .avoidHighSlope(true)
