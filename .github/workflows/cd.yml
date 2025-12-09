@@ -1,0 +1,96 @@
+name: Deploy to AWS ECS Fargate
+on:
+  push:
+    branches: [ "main" ] # main 브랜치 merge 트리거 되었을 경우
+
+env:
+  # AWS 및 ECR 설정
+  AWS_REGION: ap-northeast-2                       # 본인의 AWS 리전으로 변경
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}    # GitHub Secrets에 AWS 계정 ID 추가
+  ECR_REPOSITORY: barrier-free-friends/map-server    # ECR 저장소 이름
+  VERSION: ${{ github.sha }}                       # Commit SHA를 버전으로 사용
+
+  # ⚙️ ECS 서비스 설정 (사전 생성 필요)
+  ECS_CLUSTER: barrier-cluster                     # 생성된 ECS 클러스터 이름
+  ECS_SERVICE: map-service-id-service-v4j6yopt      # 생성된 ECS 서비스 이름
+  ECS_TASK_DEFINITION: task-definition.json        # Task Definition 템플릿 파일 이름
+  CONTAINER_NAME: map-container   # Task Definition 내부의 컨테이너 이름
+jobs:
+  Deploy:
+    name: Build Docker Image and Deploy ECS
+    runs-on: ubuntu-latest
+    # 깃허브 토큰 관련 권한 제거 (secrets.MY_GITHUB_TOKEN도 필요 없어짐)
+    permissions:
+      contents: read
+      packages: write
+    environment: deploy
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive       # 서브모듈 포함
+          token: ${{ secrets.MY_GITHUB_TOKEN }}  # 필요 시 사용
+          fetch-depth: 0              # 전체 히스토리 가져오기
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      # AWS 인증 설정 (EC2 SSH 제거 후 추가되는 필수 단계)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }} # Secrets 변수 이름 확인
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ECR 로그인 (GHCR 로그인 대체)
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 빌드, 태그 지정 (ECR 경로로 변경)
+      - name: Build container image and Tag for ECR
+        id: build-image
+        run: |
+          # 1. ECR 경로 URI 생성
+          IMAGE_URI="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.VERSION }}"
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+          
+          # 2. Spring Boot JAR 파일 빌드 및 Docker 이미지 빌드
+          chmod +x gradlew
+          ./gradlew bootJar
+          docker build -t map-service-container .
+
+          # 3. ECR 경로로 리태그
+          docker tag map-service-container:latest $IMAGE_URI
+
+      # ECR로 이미지 푸시 (GHCR push 대체)
+      - name: Publish container image to ECR
+        run: docker push ${{ env.IMAGE_URI }}
+
+      # Task Definition 렌더링 (EC2 SSH 단계 대체)
+      - name: Render AWS ECS Task Definition
+        id: render-task
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ env.IMAGE_URI }} # 최신 ECR 이미지 주입
+          environment-variables: | # 환경 변수 주입
+            ENV_DB_URL=${{ secrets.DB_URL }}
+            ENV_DB_USERNAME=${{ secrets.DB_USERNAME }}
+            ENV_DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            ENV_DB_DDL_AUTO=update
+            # 그 외 .env 파일에 정의된 환경 변수 세팅
+
+      # ECS 서비스 배포 (최종 단계)
+      - name: Deploy to Amazon ECS Service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-task.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

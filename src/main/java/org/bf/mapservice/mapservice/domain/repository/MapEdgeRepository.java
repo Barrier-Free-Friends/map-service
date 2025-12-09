@@ -6,8 +6,6 @@ import java.util.List;
 
 public interface MapEdgeRepository {
 
-    List<MapEdge> findEdgesFromSource(Long sourceNodeId);
-
     // 시작/종료 근처의 서브그래프 로딩용 메서드들도 추가 가능
     List<MapEdge> findEdgesWithinBoundingBox(
             double minLat, double minLng,
