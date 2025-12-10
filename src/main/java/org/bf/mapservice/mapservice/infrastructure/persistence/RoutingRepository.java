@@ -1,6 +1,7 @@
 package org.bf.mapservice.mapservice.infrastructure.persistence;
 
 import lombok.RequiredArgsConstructor;
+import org.bf.mapservice.mapservice.presentation.controller.dto.NearestNodeResponseDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RoutePointDto;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -95,6 +96,44 @@ public class RoutingRepository {
                         rs.getDouble("lat"),
                         rs.getDouble("lng")
                 ));
+    }
+
+    public NearestNodeResponseDto findNearestVertexWithDistance(double latitude, double longitude) {
+        String sql = """
+        SELECT
+          id,
+          ST_Y(ST_Transform(the_geom, 4326)) AS lat,
+          ST_X(ST_Transform(the_geom, 4326)) AS lng,
+          ST_Distance(
+            the_geom,
+            ST_Transform(
+              ST_SetSRID(ST_MakePoint(:lng, :lat), 4326),
+              3857
+            )
+          ) AS distance_m
+        FROM planet_osm_line_vertices_pgr
+        ORDER BY the_geom <-> ST_Transform(
+          ST_SetSRID(ST_MakePoint(:lng, :lat), 4326),
+          3857
+        )
+        LIMIT 1
+        """;
+
+        Map<String, Object> params = Map.of(
+                "lat", latitude,
+                "lng", longitude
+        );
+
+        return jdbcTemplate.queryForObject(sql, params, (rs, rowNum) ->
+                new NearestNodeResponseDto(
+                        rs.getLong("id"),
+                        rs.getDouble("lat"),
+                        rs.getDouble("lng"),
+                        rs.getDouble("distance_m"),
+                        false,      // TODO: hasElevator
+                        false       // TODO: isEntrance
+                )
+        );
     }
 
 }
