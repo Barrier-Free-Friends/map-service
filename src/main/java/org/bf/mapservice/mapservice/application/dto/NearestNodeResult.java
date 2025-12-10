@@ -1,4 +1,4 @@
-package org.bf.mapservice.mapservice.application.service;
+package org.bf.mapservice.mapservice.application.dto;
 
 public record NearestNodeResult(
         Long nodeId,
