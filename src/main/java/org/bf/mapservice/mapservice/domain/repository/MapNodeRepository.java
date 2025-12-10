@@ -1,6 +1,5 @@
 package org.bf.mapservice.mapservice.domain.repository;
 
-import org.bf.mapservice.mapservice.application.service.NearestNodeResult;
 import org.bf.mapservice.mapservice.domain.entity.MapNode;
 
 import java.util.Optional;
