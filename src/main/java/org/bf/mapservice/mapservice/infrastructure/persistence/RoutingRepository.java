@@ -54,19 +54,20 @@ public class RoutingRepository {
                                                String waysViewName) {
 
         String sql = """
-            SELECT
-                d.seq,
-                ST_Y(ST_Transform(v.the_geom, 4326)) AS lat,
-                ST_X(ST_Transform(v.the_geom, 4326)) AS lng
-            FROM pgr_dijkstra(
-                   'SELECT id, source, target, cost, reverse_cost FROM %s',
-                   :startId,
-                   :endId
-                 ) AS d
-            JOIN planet_osm_line_vertices_pgr AS v
-              ON d.node = v.id
-            ORDER BY d.seq
-            """.formatted(waysViewName);
+        SELECT
+            d.seq,
+            ST_Y(ST_Transform(v.the_geom, 4326)) AS lat,
+            ST_X(ST_Transform(v.the_geom, 4326)) AS lng
+        FROM pgr_dijkstra(
+               'SELECT id, source, target, cost, reverse_cost FROM %s',
+               CAST(:startId AS integer),
+               CAST(:endId AS integer)
+             ) AS d
+        JOIN planet_osm_line_vertices_pgr AS v
+          ON d.node = v.id
+        WHERE d.edge <> -1
+        ORDER BY d.seq
+        """.formatted(waysViewName);
 
         Map<String, Object> params = Map.of(
                 "startId", startVertexId,
