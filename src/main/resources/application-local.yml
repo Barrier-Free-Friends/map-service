@@ -21,24 +21,25 @@ spring:
 
   # 로컬에서는 Config Server 사용 X
   config:
-    import: 'optional:configserver:'
+    import: ""          # ← 기본 application.yml의 configserver import를 빈 값으로 덮어쓰기
   cloud:
     config:
+      enabled: false
       discovery:
         enabled: false
-
 eureka:
-  instance:
-    prefer-ip-address: true
-    hostname: localhost
-    non-secure-port: 3334
-    health-check-url-path: /actuator/health
+#  instance:
+#    prefer-ip-address: true
+#    hostname: localhost
+#    non-secure-port: 3334
+#    health-check-url-path: /actuator/health
 
   client:
+    enabled: false
     register-with-eureka: false
     fetch-registry: false
-    service-url:
-      defaultZone: http://localhost:3150/eureka/
+#    service-url:
+#      defaultZone: http://localhost:3150/eureka/
 
 springdoc:
   version: '1.0.0'
