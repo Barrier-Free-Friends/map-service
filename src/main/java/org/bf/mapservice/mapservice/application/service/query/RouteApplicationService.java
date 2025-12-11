@@ -1,11 +1,14 @@
-package org.bf.mapservice.mapservice.application.service;
+package org.bf.mapservice.mapservice.application.service.query;
 
 import lombok.AllArgsConstructor;
 import org.bf.global.infrastructure.exception.CustomException;
-import org.bf.mapservice.mapservice.application.query.FindRouteQuery;
+import org.bf.mapservice.mapservice.application.service.dto.FindRouteQuery;
 import org.bf.mapservice.mapservice.domain.entity.MobilityProfile;
 import org.bf.mapservice.mapservice.domain.exception.MapErrorCode;
 import org.bf.mapservice.mapservice.infrastructure.persistence.RoutingRepository;
+import org.bf.mapservice.mapservice.presentation.controller.dto.RouteDetailResponseDto;
+import org.bf.mapservice.mapservice.presentation.controller.dto.RouteEdgeDto;
+import org.bf.mapservice.mapservice.presentation.controller.dto.RouteGeoJsonResponseDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RoutePointDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,6 +79,65 @@ public class RouteApplicationService {
         // MapErrorCode.ROUTENOTSUITABLEMOBILIYT 메시지에 %s 가 있으니,
         // CustomException 쪽에서 포맷 지원 못하면 메시지 직접 포맷해서 새 에러코드 만들거나
         // 에러코드 메시지에서 %s를 빼는 것도 고려.
+        throw new CustomException(MapErrorCode.ROUTE_NOT_SUITABLE_MOBILITY);
+    }
+    public RouteDetailResponseDto findRouteDetail(FindRouteQuery query) {
+        MobilityProfile profile = MobilityProfile.from(query.mobilityType());
+
+        long startVertex = routingRepository.findNearestVertex(
+                query.startLatitude(),
+                query.startLongitude()
+        );
+        long endVertex = routingRepository.findNearestVertex(
+                query.endLatitude(),
+                query.endLongitude()
+        );
+
+        String waysView = resolveWaysViewName(profile);
+
+        if (startVertex == endVertex) {
+            RoutePointDto point = routingRepository.findVertexPoint(startVertex);
+            List<RoutePointDto> single = List.of(point);
+            RouteGeoJsonResponseDto line = new RouteGeoJsonResponseDto(single);
+            return new RouteDetailResponseDto(0.0, line, List.of());
+        }
+
+        // 1차: 프로필에 맞게
+        List<RoutePointDto> routePoints = routingRepository.findRoutePoints(
+                startVertex,
+                endVertex,
+                waysView
+        );
+        List<RouteEdgeDto> edges = routingRepository.findRouteEdges(
+                startVertex,
+                endVertex,
+                waysView
+        );
+
+        if (!routePoints.isEmpty() && !edges.isEmpty()) {
+            double distance = edges.stream()
+                    .mapToDouble(RouteEdgeDto::lengthMeters)
+                    .sum();
+            RouteGeoJsonResponseDto line = new RouteGeoJsonResponseDto(routePoints);
+            return new RouteDetailResponseDto(distance, line, edges);
+        }
+
+        // 2차: 보행자 기준으로라도 길 있는지 확인
+        List<RoutePointDto> walkRoute = routingRepository.findRoutePoints(
+                startVertex,
+                endVertex,
+                "ways_walk"
+        );
+        List<RouteEdgeDto> walkEdges = routingRepository.findRouteEdges(
+                startVertex,
+                endVertex,
+                "ways_walk"
+        );
+
+        if (walkRoute.isEmpty() || walkEdges.isEmpty()) {
+            throw new CustomException(MapErrorCode.ROUTE_NOT_FOUND);
+        }
+
         throw new CustomException(MapErrorCode.ROUTE_NOT_SUITABLE_MOBILITY);
     }
 

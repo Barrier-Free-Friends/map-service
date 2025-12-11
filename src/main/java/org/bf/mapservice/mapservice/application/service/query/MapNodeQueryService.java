@@ -1,4 +1,4 @@
-package org.bf.mapservice.mapservice.application.service;
+package org.bf.mapservice.mapservice.application.service.query;
 
 import lombok.RequiredArgsConstructor;
 import org.bf.mapservice.mapservice.infrastructure.persistence.RoutingRepository;
