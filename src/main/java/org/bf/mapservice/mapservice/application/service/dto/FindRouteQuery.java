@@ -1,4 +1,4 @@
-package org.bf.mapservice.mapservice.application.query;
+package org.bf.mapservice.mapservice.application.service.dto;
 
 import org.bf.mapservice.mapservice.domain.entity.MobilityType;
 
