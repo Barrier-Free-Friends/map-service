@@ -1,7 +1,7 @@
 //package org.bf.mapservice.mapservice.service;
 //
 //import org.bf.mapservice.mapservice.application.query.FindRouteQuery;
-//import org.bf.mapservice.mapservice.application.service.RouteApplicationService;
+//import org.bf.mapservice.mapservice.application.query.RouteApplicationService;
 //import org.bf.mapservice.mapservice.domain.entity.MapEdge;
 //import org.bf.mapservice.mapservice.domain.entity.MapNode;
 //import org.bf.mapservice.mapservice.domain.entity.MobilityType;
