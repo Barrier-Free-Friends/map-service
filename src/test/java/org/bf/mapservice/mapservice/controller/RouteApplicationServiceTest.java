@@ -1,8 +1,8 @@
 package org.bf.mapservice.mapservice.controller;
 
 import org.bf.global.infrastructure.exception.CustomException;
-import org.bf.mapservice.mapservice.application.query.FindRouteQuery;
-import org.bf.mapservice.mapservice.application.service.RouteApplicationService;
+import org.bf.mapservice.mapservice.application.service.dto.FindRouteQuery;
+import org.bf.mapservice.mapservice.application.service.query.RouteApplicationService;
 import org.bf.mapservice.mapservice.domain.entity.MobilityType;
 import org.bf.mapservice.mapservice.domain.exception.MapErrorCode;
 import org.bf.mapservice.mapservice.infrastructure.persistence.RoutingRepository;
@@ -10,7 +10,6 @@ import org.bf.mapservice.mapservice.presentation.controller.dto.RoutePointDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
