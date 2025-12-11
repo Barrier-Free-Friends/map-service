@@ -2,7 +2,7 @@ package org.bf.mapservice.mapservice.presentation.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.bf.global.infrastructure.CustomResponse;
-import org.bf.mapservice.mapservice.application.service.MapNodeQueryService;
+import org.bf.mapservice.mapservice.application.service.query.MapNodeQueryService;
 import org.bf.mapservice.mapservice.presentation.controller.dto.NearestNodeResponseDto;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

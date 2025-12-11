@@ -2,12 +2,12 @@ package org.bf.mapservice.mapservice.presentation.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.bf.global.infrastructure.CustomResponse;
-import org.bf.mapservice.mapservice.application.query.FindRouteQuery;
-import org.bf.mapservice.mapservice.application.service.RouteApplicationService;
+import org.bf.mapservice.mapservice.application.service.dto.FindRouteQuery;
+import org.bf.mapservice.mapservice.application.service.query.RouteApplicationService;
+import org.bf.mapservice.mapservice.presentation.controller.dto.RouteDetailResponseDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RouteGeoJsonResponseDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RoutePointDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RouteRequestDto;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +32,19 @@ public class RoutesController {
         List<RoutePointDto> points = routeApplicationService.findRoute(query);
         // 2) GeoJSON LineString으로 감싸서 응답
         RouteGeoJsonResponseDto response = new RouteGeoJsonResponseDto(points);
+        return CustomResponse.onSuccess(response);
+    }
+
+    @PostMapping("/detail")
+    public CustomResponse<RouteDetailResponseDto> findRouteDetail(@RequestBody RouteRequestDto request) {
+        FindRouteQuery query = new FindRouteQuery(
+                request.startLatitude(),
+                request.startLongitude(),
+                request.endLatitude(),
+                request.endLongitude(),
+                request.mobilityType()
+        );
+        RouteDetailResponseDto response = routeApplicationService.findRouteDetail(query);
         return CustomResponse.onSuccess(response);
     }
 }

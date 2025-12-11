@@ -1,8 +1,8 @@
 package org.bf.mapservice.mapservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bf.mapservice.mapservice.application.query.FindRouteQuery;
-import org.bf.mapservice.mapservice.application.service.RouteApplicationService;
+import org.bf.mapservice.mapservice.application.service.dto.FindRouteQuery;
+import org.bf.mapservice.mapservice.application.service.query.RouteApplicationService;
 import org.bf.mapservice.mapservice.domain.entity.MobilityType;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RoutePointDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RouteRequestDto;
