@@ -20,6 +20,11 @@ graphhopper:
       vehicle: foot
       weighting: fastest
 
+    - name: foot_custom
+      vehicle: foot
+      weighting: custom
+      custom_model_file: empty
+
     - name: wheelchair
       vehicle: wheelchair
       weighting: custom
@@ -30,4 +35,4 @@ graphhopper:
     CH:
       enabled: true
     LM:
-      enabled: false
+      enabled: true
