@@ -8,5 +8,6 @@ public record RouteDetailResponseDto(
         List<RouteEdgeDto> edges,
         boolean fullyAccessible,
         Integer accessibleUntilSeq,
-        String firstBlockedReason
+        String firstBlockedReason,
+        String requestedMobilityType
 ) {}
