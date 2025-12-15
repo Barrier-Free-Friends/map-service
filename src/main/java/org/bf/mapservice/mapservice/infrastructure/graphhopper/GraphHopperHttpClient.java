@@ -37,6 +37,7 @@ public class GraphHopperHttpClient {
                 .body(request)
                 .retrieve()
                 .body(GhRouteResponse.class);
+        log.info("[GH] request={}", request);
 
         if (res != null && res.paths() != null && !res.paths().isEmpty()) {
             var p = res.paths().get(0);

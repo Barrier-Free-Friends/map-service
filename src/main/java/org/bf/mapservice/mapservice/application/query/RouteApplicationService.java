@@ -1,52 +1,54 @@
 package org.bf.mapservice.mapservice.application.query;
 
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bf.mapservice.mapservice.domain.entity.MobilityType;
 import org.bf.mapservice.mapservice.infrastructure.graphhopper.GraphHopperHttpClient;
 import org.bf.mapservice.mapservice.infrastructure.graphhopper.dto.GhRouteRequest;
 import org.bf.mapservice.mapservice.infrastructure.graphhopper.dto.GhRouteResponse;
+import org.bf.mapservice.mapservice.infrastructure.persistence.ObstacleQueryDaoImpl;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RouteDetailResponseDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RouteEdgeDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RouteGeoJsonResponseDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.RouteRequestDto;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RouteApplicationService {
 
     private final GraphHopperHttpClient ghClient;
-
-    public RouteApplicationService(GraphHopperHttpClient ghClient) {
-        this.ghClient = ghClient;
-    }
+    private final ObstacleCustomModelBuilder obstacleCustomModelBuilder;
+    private final ObstacleQueryDaoImpl obstacleQueryDaoImpl;
+    private final ObstaclePolicy obstaclePolicy;
 
     public RouteDetailResponseDto findRouteDetail(RouteRequestDto req) {
 
-        String profile = toProfile(req.mobilityType());
+        // 1) bbox
+        var bbox = BboxUtil.envelopeWithMarginMeters(
+                req.startLatitude(), req.startLongitude(),
+                req.endLatitude(), req.endLongitude(),
+                800
+        );
 
-        boolean barrierFree =
-                req.mobilityType() == MobilityType.WHEELCHAIR
-                        || req.mobilityType() == MobilityType.STROLLER
-                        || req.mobilityType() == MobilityType.ELDERLY;
+        var obstacles = obstacleQueryDaoImpl.findActiveObstaclesInEnvelope(
+                bbox.minLon(), bbox.minLat(), bbox.maxLon(), bbox.maxLat(),
+                OffsetDateTime.now()
+        );
 
-        Map<String, Object> customModel = null;
-        Map<String, Object> ch = Map.of("disable", false);
+        // 2) custom_model
+        var customModel = obstacleCustomModelBuilder.buildCustomModel(
+                obstacles, req.mobilityType(), obstaclePolicy
+        );
 
-        if (barrierFree) {
-            customModel = Map.of(
-                    "priority", List.of(
-                            Map.of(
-                                    "if", "road_class == STEPS",
-                                    "multiply_by", 0
-                            )
-                    )
-            );
-            ch = Map.of("disable", true);
-        }
+        boolean useCustom = (customModel != null);
+        String profile = toProfile(req.mobilityType(), useCustom);
 
         GhRouteRequest ghReq = new GhRouteRequest(
                 profile,
@@ -54,10 +56,10 @@ public class RouteApplicationService {
                         List.of(req.startLongitude(), req.startLatitude()),
                         List.of(req.endLongitude(), req.endLatitude())
                 ),
-                false,   // points_encoded
-                false,   // instructions (turn-by-turn 필요 없으니 false)
+                false,
+                false,
                 customModel,
-                ch
+                Map.of("disable", useCustom)
         );
 
         GhRouteResponse res = ghClient.routePost(ghReq);
@@ -72,25 +74,49 @@ public class RouteApplicationService {
         RouteGeoJsonResponseDto geo =
                 new RouteGeoJsonResponseDto("LineString", coords);
 
+        // 🔹 MVP: edge는 아직 단일
         var edges = List.of(
-                new RouteEdgeDto(1, 0L, "unknown", null,
-                        path.distance(), false, true, null)
+                new RouteEdgeDto(
+                        1,
+                        0L,
+                        "route",
+                        null,
+                        path.distance(),
+                        false,
+                        true,
+                        null
+                )
         );
+
+        boolean barrierFree =
+                req.mobilityType() == MobilityType.WHEELCHAIR
+                        || req.mobilityType() == MobilityType.STROLLER
+                        || req.mobilityType() == MobilityType.ELDERLY;
+
+        boolean fullyAccessible =
+                !(barrierFree && obstacles != null && !obstacles.isEmpty());
+
+        Integer accessibleUntilSeq =
+                fullyAccessible ? null : 0;
+
+        String firstBlockedReason =
+                fullyAccessible ? "NONE" : "STAIRS";
 
         return new RouteDetailResponseDto(
                 path.distance(),
                 geo,
                 edges,
-                true,
-                1,
-                "NONE"
+                fullyAccessible,
+                accessibleUntilSeq,
+                firstBlockedReason,
+                req.mobilityType().name()
         );
     }
 
-    private String toProfile(MobilityType mobilityType) {
+    private String toProfile(MobilityType mobilityType, boolean useCustom) {
         return switch (mobilityType) {
-            case PEDESTRIAN -> "foot";
-            case WHEELCHAIR, STROLLER, ELDERLY -> "wheelchair";
+            case PEDESTRIAN -> useCustom ? "foot_custom" : "foot";
+            case WHEELCHAIR, STROLLER, ELDERLY -> "wheelchair"; // wheelchair은 이미 custom weighting이니까 그대로 OK
         };
     }
 }
