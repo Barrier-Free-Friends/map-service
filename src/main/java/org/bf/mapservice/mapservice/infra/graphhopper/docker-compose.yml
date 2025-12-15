@@ -1,0 +1,15 @@
+services:
+  graphhopper:
+    image: israelhikingmap/graphhopper:7.0
+    container_name: bf-graphhopper
+    restart: unless-stopped
+    ports:
+      - "8989:8989"
+      - "8990:8990"
+    environment:
+      - JAVA_OPTS=-Xmx2g
+    volumes:
+      - ./config.yml:/graphhopper/config/config.yml
+      - ./data/gangnam.osm:/graphhopper/data/gangnam.osm
+      - ./graph-cache:/graphhopper/graph-cache
+    command: --host 0.0.0.0 --config /graphhopper/config/config.yml

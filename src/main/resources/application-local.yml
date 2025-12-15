@@ -20,8 +20,6 @@ spring:
         show_sql: true
         format_sql: true
         use_sql_comments: true
-        # ✅ PostGIS/Spatial 쓰려면 이 dialect 지정하는 게 안전함
-        dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
 
   # 로컬에서는 Config Server 사용 X
   config:
