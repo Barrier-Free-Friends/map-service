@@ -19,9 +19,12 @@ graphhopper:
     - name: foot
       vehicle: foot
       weighting: fastest
+
     - name: wheelchair
-      vehicle: foot
-      weighting: fastest
+      vehicle: wheelchair
+      weighting: custom
+      custom_model_file: empty
+
 
   routing:
     CH:

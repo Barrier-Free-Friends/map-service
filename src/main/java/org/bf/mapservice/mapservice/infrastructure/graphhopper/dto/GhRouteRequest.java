@@ -9,5 +9,5 @@ public record GhRouteRequest(
         boolean points_encoded,
         boolean instructions,
         Map<String, Object> custom_model,
-        Map<String, Object> ch          // {"disable": true} 형태
+        Map<String, Object> ch          // {"disable": true}
 ) {}
