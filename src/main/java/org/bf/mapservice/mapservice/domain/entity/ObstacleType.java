@@ -7,5 +7,8 @@ public enum ObstacleType {
     ROAD_BLOCKED,
     SLOPE,
     ELEVATOR_OUTAGE,
-    OTHER
+    ROCK,
+    FURNITURE,
+    TREE,
+    OTHER_OBSTACLE, // 기타
 }
