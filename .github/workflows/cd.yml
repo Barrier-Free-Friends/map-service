@@ -84,7 +84,7 @@ jobs:
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DB_DDL_AUTO=update
-            GRAPHHOPPER_BASE_URL=${{ secrets.GRAPHHOPPER_BASE_URL }}
+            HOPPER_BASE_URL=${{ secrets.HOPPER_BASE_URL }}
 
           # 그 외 .env 파일에 정의된 환경 변수 세팅ddas
 

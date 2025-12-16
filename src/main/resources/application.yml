@@ -69,8 +69,8 @@ eureka:
 
 graphhopper:
   # ECS에서는 반드시 "http://호스트:포트" 형태로 넣기
-  # 예: GRAPHHOPPER_BASE_URL=http://10.0.1.210:8989
-  base-url: ${GRAPHHOPPER_BASE_URL:}
+  # 예: HOPPER_BASE_URL=http://10.0.1.210:8989
+  base-url: ${HOPPER_BASE_URL:}
 
 server:
   port: ${SERVER_PORT:3334}
