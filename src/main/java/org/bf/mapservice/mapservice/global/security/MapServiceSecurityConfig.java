@@ -52,10 +52,12 @@ public class MapServiceSecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // 프론트 도메인 허용
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173"   // Vite dev
-                // 나중에 배포 도메인도 추가
-        ));
+//        config.setAllowedOrigins(List.of(
+//                "http://localhost:5173",
+//                "*"// Vite dev
+//                // 나중에 배포 도메인도 추가
+//        ));
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
