@@ -13,6 +13,12 @@ public class ObstacleCustomModelBuilder {
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
 
+    private final ObstacleDefaults defaults;
+
+    public ObstacleCustomModelBuilder(ObstacleDefaults defaults) {
+        this.defaults = defaults;
+    }
+
     public Map<String, Object> buildCustomModel(List<Obstacle> obstacles, MobilityType mobility, ObstaclePolicy policy) {
         boolean barrierFree = mobility == MobilityType.WHEELCHAIR
                 || mobility == MobilityType.STROLLER
@@ -38,15 +44,16 @@ public class ObstacleCustomModelBuilder {
             customModel.put("areas", buildAreasFeatureCollection(obstacles));
 
             for (Obstacle o : obstacles) {
-                var d = policy.decide(mobility, o.getType(), o.getSeverity());
+                Decision d = policy.decide(mobility, o.getType(), o.getSeverity());
+
                 if (d.priorityMultiply() >= 1.0) continue;
 
-                // GH 문서: areas id = "obst_1" 이면 조건은 "in_obst_1"
                 priority.add(Map.of(
                         "if", "in_" + areaId(o),
                         "multiply_by", d.priorityMultiply()
                 ));
             }
+
         }
 
         if (!priority.isEmpty()) customModel.put("priority", priority);
@@ -70,7 +77,7 @@ public class ObstacleCustomModelBuilder {
 
             Map<String, Object> feature = new LinkedHashMap<>();
             feature.put("type", "Feature");
-            feature.put("id", areaId(o));      // 중요: "obst_1"
+            feature.put("id", areaId(o));       // 중요: "obst_1"
             feature.put("geometry", geometry);  // properties 필요 없음
 
             features.add(feature);
@@ -87,12 +94,20 @@ public class ObstacleCustomModelBuilder {
     }
 
     private Polygon toBufferedPolygon(Obstacle o) {
-        int radius = (o.getRadiusMeters() != null)
-                ? o.getRadiusMeters()
-                : (o.getGeomType() == ObstacleGeometryType.POINT ? 8 : 6);
-
         Geometry g = o.getGeom();
         if (g == null) return null;
+
+        // ✅ radius 보정: DB에 null/0이 들어와도 Defaults 기반으로 의미있는 buffer 생성
+        Integer radiusMeters = o.getRadiusMeters();
+        int radius =
+                (radiusMeters != null && radiusMeters > 0)
+                        ? radiusMeters
+                        : defaults.defaultRadiusMeters(o.getType());
+
+        if (radius <= 0) {
+            // 최종 fallback (서비스에서 이미 보정되지만, 혹시라도 대비)
+            radius = (o.getGeomType() == ObstacleGeometryType.POINT) ? 50 : 30;
+        }
 
         double lat = g.getCoordinate().y;
         double metersPerDegLat = 111_320.0;
@@ -116,16 +131,15 @@ public class ObstacleCustomModelBuilder {
 
     private Polygon circlePolygon(Coordinate center, double rLon, double rLat, int steps) {
         Coordinate[] coords = new Coordinate[steps + 1];
-        for (int i = 0; i < steps; i++) {
-            double ang = (2.0 * Math.PI) * i / steps;
+        for (int i = 0; i <= steps; i++) {
+            double a = 2.0 * Math.PI * i / steps;
             coords[i] = new Coordinate(
-                    center.x + (Math.cos(ang) * rLon),
-                    center.y + (Math.sin(ang) * rLat)
+                    center.x + Math.cos(a) * rLon,
+                    center.y + Math.sin(a) * rLat
             );
         }
-        coords[steps] = coords[0];
-        LinearRing ring = GF.createLinearRing(coords);
-        return GF.createPolygon(ring);
+        LinearRing shell = GF.createLinearRing(coords);
+        return GF.createPolygon(shell, null);
     }
 
     private List<List<List<Double>>> polygonToGeoJsonCoords(Polygon p) {
@@ -135,5 +149,12 @@ public class ObstacleCustomModelBuilder {
             outer.add(List.of(c.x, c.y));
         }
         return List.of(outer);
+    }
+
+    public Map<String, Object> buildAreasOnly(List<Obstacle> obstacles) {
+        if (obstacles == null || obstacles.isEmpty()) {
+            return Map.of("type", "FeatureCollection", "features", List.of());
+        }
+        return buildAreasFeatureCollection(obstacles);
     }
 }
