@@ -8,8 +8,31 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:update}
+    open-in-view: false
+    generate-ddl: true
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+
+  # Config Server import 체크로 앱이 죽는 문제 차단
+  config:
+    import: "optional:configserver:"
+
+  # Spring Cloud Config 완전 비활성화 (없어도 무조건 기동)
+  cloud:
+    config:
+      enabled: false
+    config:
+      import-check:
+        enabled: false
+
   kafka:
-    bootstrap-servers: 34.64.55.76:9092,34.64.55.76:9093,34.64.55.76:9094
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:34.64.55.76:9092,34.64.55.76:9093,34.64.55.76:9094}
 
     producer:
       properties:
@@ -21,45 +44,53 @@ spring:
       retries: 3
 
     consumer:
-      group-id: mapservice-group
+      group-id: ${KAFKA_GROUP_ID:mapservice-group}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
 
-  jpa:
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
-        use_sql_comments: true
-    hibernate:
-      ddl-auto: ${DB_DDL_AUTO}
-    open-in-view: false
-    generate-ddl: true
-
-  config:
-    import: 'optional:configserver:'
-  cloud:
-    config:
-      discovery:
-        enabled: true
-        service-id: config-server
+    # Kafka가 죽어있어도 앱 기동은 하게 (리스너 자동 시작 OFF)
+    listener:
+      auto-startup: false
 
 eureka:
   instance:
-    prefer-ip-address: false
-    hostname: ecs-load-balancer-597540403.ap-northeast-2.elb.amazonaws.com
-    non-secure-port: 3334
+    prefer-ip-address: true
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    non-secure-port: ${SERVER_PORT:3334}
     health-check-url-path: /actuator/health
 
+  # Eureka가 없어도 앱 기동은 하게 (등록/조회 OFF)
   client:
-    register-with-eureka: true
-    fetch-registry: true
+    register-with-eureka: false
+    fetch-registry: false
     service-url:
-      defaultZone: http://52.79.151.83:3150/eureka/
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://52.79.151.83:3150/eureka/}
+
+graphhopper:
+  # ECS에서는 반드시 "http://호스트:포트" 형태로 넣기
+  # 예: GRAPHHOPPER_BASE_URL=http://10.0.1.210:8989
+  base-url: ${GRAPHHOPPER_BASE_URL:}
+
+server:
+  port: ${SERVER_PORT:3334}
+
+# ALB/ECS 헬스체크가 의존성(Kafka/DB 등) 때문에 DOWN 안 나게 "liveness" 중심으로 열기
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    defaults:
+      enabled: false
 
 springdoc:
-  version: '1.0.0'
+  version: "1.0.0"
   api-docs:
     path: /v3/api-docs
   default-consumes-media-type: application/json
@@ -69,12 +100,5 @@ springdoc:
     tags-sorter: alpha
     path: /api-docs.html
     disable-swagger-default-url: true
-    doc-expansion:
   paths-to-match:
     - /**
-
-graphhopper:
-  base-url: ${GRAPHHOPPER_BASE_URL:http://localhost:8989}
-
-server:
-  port: 3334
