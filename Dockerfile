@@ -7,6 +7,7 @@ ENTRYPOINT ["java", "-jar", \
             "-DDB_USERNAME=${ENV_DB_USERNAME}", \
             "-DDB_PASSWORD=${ENV_DB_PASSWORD}", \
             "-DDB_DDL_AUTO=${ENV_DB_DDL_AUTO}", \
+            "-GRAPHOPHOPPER_BASE_URL=${ENV_GRAPHOPHOPPER_BASE_URL}", \
             "app.jar"]
 
 EXPOSE 3334
