@@ -30,8 +30,8 @@ public class MapServiceSecurityConfig {
     @Order(0)
     public SecurityFilterChain routesFilterChain(HttpSecurity http) throws Exception {
         http
-                // 이 체인은 /routes/** 에만 매칭됨
-                .securityMatcher("/routes/**")
+                // 이 체인은 /** 에만 매칭됨
+                .securityMatcher("/**")
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -61,8 +61,8 @@ public class MapServiceSecurityConfig {
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // /routes/** 에만 CORS 설정 적용
-        source.registerCorsConfiguration("/routes/**", config);
+        // /** 에만 CORS 설정 적용
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 }
