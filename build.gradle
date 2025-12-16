@@ -72,11 +72,14 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly 'com.h2database:h2'
 
+    // kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+
     //지도관련 의존성들
     // PostGIS + Hibernate Spatial
     implementation "org.hibernate.orm:hibernate-spatial"
     implementation "org.locationtech.jts:jts-core:1.19.0"
-
     // validation
     implementation "org.springframework.boot:spring-boot-starter-validation"
 }
