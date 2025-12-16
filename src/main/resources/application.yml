@@ -8,6 +8,24 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
+  kafka:
+    bootstrap-servers: 34.64.55.76:9092,34.64.55.76:9093,34.64.55.76:9094
+
+    producer:
+      properties:
+        spring.json.add.type.headers: true
+        spring.json.trusted.packages: "*"
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+
+    consumer:
+      group-id: mapservice-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+
   jpa:
     properties:
       hibernate:
@@ -54,5 +72,7 @@ springdoc:
     doc-expansion:
   paths-to-match:
     - /**
+
+
 server:
   port: 3334

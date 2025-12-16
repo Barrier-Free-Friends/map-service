@@ -1,0 +1,38 @@
+server:
+  application_connectors:
+    - type: http
+      port: 8989
+  admin_connectors:
+    - type: http
+      port: 8990
+
+graphhopper:
+  graph.location: /graphhopper/graph-cache
+  datareader.file: /graphhopper/data/gangnam.osm
+  datareader.dataaccess: RAM_STORE
+
+  import.osm.ignored_highways: ""
+
+  encoded_values: road_class,road_environment,surface,track_type,foot,access
+
+  profiles:
+    - name: foot
+      vehicle: foot
+      weighting: fastest
+
+    - name: foot_custom
+      vehicle: foot
+      weighting: custom
+      custom_model_file: empty
+
+    - name: wheelchair
+      vehicle: wheelchair
+      weighting: custom
+      custom_model_file: empty
+
+
+  routing:
+    CH:
+      enabled: true
+    LM:
+      enabled: true
