@@ -1,26 +1,31 @@
 package org.bf.mapservice.mapservice.presentation.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.bf.mapservice.mapservice.application.command.CreateObstacleCommand;
 import org.bf.mapservice.mapservice.application.command.ObstacleCommandService;
+import org.bf.mapservice.mapservice.application.query.ObstacleCustomModelBuilder;
 import org.bf.mapservice.mapservice.domain.entity.ObstacleGeometryType;
+import org.bf.mapservice.mapservice.infrastructure.persistence.ObstacleQueryDaoImpl;
 import org.bf.mapservice.mapservice.presentation.controller.dto.CreateObstacleRequestDto;
+import org.bf.mapservice.mapservice.presentation.controller.dto.ObstacleFeatureCollectionDto;
 import org.locationtech.jts.geom.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/obstacles")
+@RequiredArgsConstructor
 public class ObstaclesController {
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
 
     private final ObstacleCommandService commandService;
-
-    public ObstaclesController(ObstacleCommandService commandService) {
-        this.commandService = commandService;
-    }
+    private final ObstacleQueryDaoImpl obstacleQueryDaoImpl;
+    private final ObstacleCustomModelBuilder obstacleCustomModelBuilder;
 
     @PostMapping
     public Long create(@RequestBody @Valid CreateObstacleRequestDto req) {
@@ -41,6 +46,27 @@ public class ObstaclesController {
     @PutMapping("/{id}/resolve")
     public void resolve(@PathVariable Long id) {
         commandService.resolve(id);
+    }
+
+    @GetMapping
+    public ObstacleFeatureCollectionDto getActiveObstacles(
+            @RequestParam double minLon,
+            @RequestParam double minLat,
+            @RequestParam double maxLon,
+            @RequestParam double maxLat
+    ) {
+        var obstacles = obstacleQueryDaoImpl.findActiveObstaclesInEnvelope(
+                minLon, minLat, maxLon, maxLat,
+                OffsetDateTime.now()
+        );
+
+        // FeatureCollection(Map)에서 features만 꺼내서 내려줌
+        Map<String, Object> fc = obstacleCustomModelBuilder.buildAreasOnly(obstacles);
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> features = (List<Map<String, Object>>) fc.getOrDefault("features", List.of());
+
+        return new ObstacleFeatureCollectionDto("FeatureCollection", features);
     }
 
     private Geometry toGeometry(CreateObstacleRequestDto req) {
