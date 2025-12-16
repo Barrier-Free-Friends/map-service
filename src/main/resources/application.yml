@@ -73,6 +73,8 @@ springdoc:
   paths-to-match:
     - /**
 
+graphhopper:
+  base-url: ${GRAPHOPHOPPER_BASE_URL}
 
 server:
   port: 3334
