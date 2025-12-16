@@ -38,7 +38,7 @@ spring:
     generate-ddl: true
 
   config:
-    import: 'optional:configserver: '
+    import: 'optional:configserver:'
   cloud:
     config:
       discovery:
