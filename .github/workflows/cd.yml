@@ -78,13 +78,13 @@ jobs:
         with:
           task-definition: ${{ env.ECS_TASK_DEFINITION }}
           container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ env.IMAGE_URI }}
-          environment-variables: |
-            DB_URL=${{ secrets.DB_URL }}
-            DB_USERNAME=${{ secrets.DB_USERNAME }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_DDL_AUTO=update
-            HOPPER_BASE_URL=${{ secrets.HOPPER_BASE_URL }}
+          image: ${{ env.IMAGE_URI }} # 최신 ECR 이미지 주입asd
+          environment-variables: | # 환경 변수 주입
+            ENV_DB_URL=${{ secrets.DB_URL }}
+            ENV_DB_USERNAME=${{ secrets.DB_USERNAME }}
+            ENV_DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            ENV_DB_DDL_AUTO=update
+            ENV_GRAPHOPHOPPER_BASE_URL=${{ secrets.HOPPER_BASE_URL }}
 
           # 그 외 .env 파일에 정의된 환경 변수 세팅ddas
 
