@@ -74,7 +74,7 @@ springdoc:
     - /**
 
 graphhopper:
-  base-url: ${GRAPHOPHOPPER_BASE_URL}
+  base-url: ${GRAPHHOPPER_BASE_URL:http://localhost:8989}
 
 server:
   port: 3334
