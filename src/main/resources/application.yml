@@ -50,15 +50,15 @@ spring:
 
 eureka:
   instance:
-    prefer-ip-address: true
-    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    prefer-ip-address: false
+    hostname: ecs-load-balancer-597540403.ap-northeast-2.elb.amazonaws.com
     non-secure-port: ${SERVER_PORT:3334}
     health-check-url-path: /actuator/health
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE:http://52.79.151.83:3150/eureka/}
+      defaultZone: http://52.79.151.83:3150/eureka/
 
 graphhopper:
   base-url: ${HOPPER_BASE_URL:}
