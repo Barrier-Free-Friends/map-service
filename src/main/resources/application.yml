@@ -20,8 +20,7 @@ spring:
         use_sql_comments: true
 
   config:
-    import: "optional:configserver:"
-
+    import: 'optional:configserver: '
   cloud:
     config:
       discovery:
@@ -41,10 +40,11 @@ spring:
       retries: 3
 
     consumer:
-      group-id: report-service-group
+      group-id: ${KAFKA_GROUP_ID:mapservice-group}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
+
 eureka:
   instance:
     prefer-ip-address: false
@@ -57,11 +57,25 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://52.79.151.83:3150/eureka/
+
 graphhopper:
   base-url: ${HOPPER_BASE_URL:}
 
 server:
   port: 3334
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    defaults:
+      enabled: false
 
 springdoc:
   version: "1.0.0"
