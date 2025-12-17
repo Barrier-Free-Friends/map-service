@@ -19,19 +19,17 @@ spring:
         format_sql: true
         use_sql_comments: true
 
-  # Config Server import 체크로 앱이 죽는 문제 차단
   config:
-    import: "optional:configserver:"
-
-  # Spring Cloud Config 완전 비활성화 (없어도 무조건 기동)
+    import: 'optional:configserver: '
   cloud:
     config:
-      enabled: false
-      import-check:
-        enabled: false
+      discovery:
+        enabled: true
+        service-id: config-server
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:34.64.55.76:9092,34.64.55.76:9093,34.64.55.76:9094}
+    bootstrap-servers: 34.64.55.76:9092,34.64.55.76:9093,34.64.55.76:9094
+
     producer:
       properties:
         spring.json.add.type.headers: true
@@ -40,20 +38,20 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all
       retries: 3
+
     consumer:
       group-id: ${KAFKA_GROUP_ID:mapservice-group}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
-    listener:
-      auto-startup: false
 
 eureka:
   instance:
     prefer-ip-address: false
     hostname: ecs-load-balancer-597540403.ap-northeast-2.elb.amazonaws.com
-    non-secure-port: ${SERVER_PORT:3334}
+    non-secure-port: 3334
     health-check-url-path: /actuator/health
+
   client:
     register-with-eureka: true
     fetch-registry: true
@@ -64,7 +62,7 @@ graphhopper:
   base-url: ${HOPPER_BASE_URL:}
 
 server:
-  port: ${SERVER_PORT:3334}
+  port: 3334
 
 management:
   endpoints:
