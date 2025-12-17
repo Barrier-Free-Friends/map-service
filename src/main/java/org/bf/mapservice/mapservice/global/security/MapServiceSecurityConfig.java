@@ -51,19 +51,19 @@ public class MapServiceSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // 프론트 도메인 허용
-//        config.setAllowedOrigins(List.of(
-//                "http://localhost:5173",
-//                "*"// Vite dev
-//                // 나중에 배포 도메인도 추가
-//        ));
+        // 모든 Origin 허용
         config.setAllowedOriginPatterns(List.of("*"));
+
+        // 모든 HTTP Method 허용
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // 모든 Header 허용
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+
+        // Credentials 비허용 (★ 중요)
+        config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // /** 에만 CORS 설정 적용
         source.registerCorsConfiguration("/**", config);
         return source;
     }
