@@ -64,6 +64,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    implementation 'io.micrometer:micrometer-core' // 메트릭 (필요 시)
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
 
