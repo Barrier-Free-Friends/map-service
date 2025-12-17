@@ -21,7 +21,8 @@
         { "name": "ENV_DB_URL", "value": "PLACEHOLDER_DB_URL" },
         { "name": "ENV_DB_USERNAME", "value": "PLACEHOLDER_DB_USERNAME" },
         { "name": "ENV_DB_PASSWORD", "value": "PLACEHOLDER_DB_PASSWORD" },
-        { "name": "ENV_DB_DDL_AUTO", "value": "update" }
+        { "name": "ENV_DB_DDL_AUTO", "value": "update" },
+        { "name": "ENV_HOPPER_BASE_URL", "value": "PLACEHOLDER_HOPPER_BASE_URL" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
