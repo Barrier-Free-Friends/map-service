@@ -1,5 +1,7 @@
 package org.bf.mapservice.mapservice.presentation.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bf.mapservice.mapservice.application.command.CreateObstacleCommand;
@@ -9,6 +11,7 @@ import org.bf.mapservice.mapservice.domain.entity.ObstacleGeometryType;
 import org.bf.mapservice.mapservice.infrastructure.persistence.ObstacleQueryDaoImpl;
 import org.bf.mapservice.mapservice.presentation.controller.dto.CreateObstacleRequestDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.ObstacleFeatureCollectionDto;
+import org.bf.mapservice.mapservice.presentation.docs.ObstaclesApiDoc;
 import org.locationtech.jts.geom.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/obstacles")
 @RequiredArgsConstructor
-public class ObstaclesController {
+public class ObstaclesController implements ObstaclesApiDoc {
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
 
@@ -50,10 +53,10 @@ public class ObstaclesController {
 
     @GetMapping
     public ObstacleFeatureCollectionDto getActiveObstacles(
-            @RequestParam double minLon,
-            @RequestParam double minLat,
-            @RequestParam double maxLon,
-            @RequestParam double maxLat
+        @RequestParam Double minLon,
+        @RequestParam Double minLat,
+        @RequestParam Double maxLon,
+        @RequestParam Double maxLat
     ) {
         var obstacles = obstacleQueryDaoImpl.findActiveObstaclesInEnvelope(
                 minLon, minLat, maxLon, maxLat,

@@ -16,3 +16,4 @@ public record CreateObstacleCommand(
         OffsetDateTime startsAt,
         OffsetDateTime endsAt
 ) {}
+

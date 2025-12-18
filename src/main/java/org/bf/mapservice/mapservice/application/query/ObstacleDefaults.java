@@ -1,8 +1,6 @@
 package org.bf.mapservice.mapservice.application.query;
 
-import org.bf.mapservice.mapservice.domain.entity.MobilityType;
-import org.bf.mapservice.mapservice.domain.entity.ObstacleType;
-import org.bf.mapservice.mapservice.domain.entity.Severity;
+import org.bf.mapservice.mapservice.domain.entity.*;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -38,17 +36,39 @@ public class ObstacleDefaults {
     public int defaultRadiusMeters(ObstacleType type) {
         return switch (type) {
             case STAIRS -> 0;
-            case CONSTRUCTION -> 60;
+            case CONSTRUCTION -> 30;
 
-            case TREE, ROCK -> 40;
-            case FURNITURE -> 30;
-            case SLOPE -> 50;
-            case OTHER_OBSTACLE -> 30;
+            case TREE, ROCK -> 10;
+            case FURNITURE -> 10;
+            case SLOPE -> 10;
+            case OTHER_OBSTACLE -> 10;
 
             case SIDEWALK_BLOCKED -> 0;
             case ROAD_BLOCKED -> 0;
             case ELEVATOR_OUTAGE -> 0;
         };
+    }
+
+    /* =========================
+     *  radius 단일 결정 로직
+     * ========================= */
+
+    public int resolveRadiusMeters(Obstacle o) {
+        // 1) DB에 명시된 값이 있으면 최우선
+        if (o.getRadiusMeters() != null && o.getRadiusMeters() > 0) {
+            return o.getRadiusMeters();
+        }
+
+        // 2) 타입 기반 기본값
+        int byType = defaultRadiusMeters(o.getType());
+        if (byType > 0) {
+            return byType;
+        }
+
+        // 3) 최종 fallback (여기만!)
+        return (o.getGeomType() == ObstacleGeometryType.POINT)
+                ? 15   // POINT 최소 표시 반경
+                : 20;  // LINE / POLYGON
     }
 
     /**
@@ -72,7 +92,7 @@ public class ObstacleDefaults {
             case ELEVATOR_OUTAGE -> barrierFree ? 0.0 : 1.0; // 일반 보행자는 ignore에 가까움
 
             // 신규/일반 장애물
-            case CONSTRUCTION -> 0.0;           // 공사는 기본 차단(우회 유도 수준을 넘어선다고 가정)
+            case CONSTRUCTION -> 0.3;           // 공사는 기본 차단(우회 유도 수준을 넘어선다고 가정)
             case TREE, ROCK -> 0.3;             // 우회 유도 강
             case FURNITURE -> 0.5;              // 우회 유도 중
             case OTHER_OBSTACLE -> 0.6;         // 약한 우회 유도
