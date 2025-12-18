@@ -35,7 +35,7 @@ public class ObstacleCommandService {
             radius = (def > 0) ? def : null;
         }
         if (radius == null || radius <= 0) {
-            radius = (cmd.geomType() == ObstacleGeometryType.POINT) ? 50 : 30;
+            radius = (cmd.geomType() == ObstacleGeometryType.POINT) ? 15 : 20;
         }
 
         Obstacle obstacle = new Obstacle(
