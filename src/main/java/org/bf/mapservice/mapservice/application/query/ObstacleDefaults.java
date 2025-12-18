@@ -72,7 +72,7 @@ public class ObstacleDefaults {
             case ELEVATOR_OUTAGE -> barrierFree ? 0.0 : 1.0; // 일반 보행자는 ignore에 가까움
 
             // 신규/일반 장애물
-            case CONSTRUCTION -> 0.0;           // 공사는 기본 차단(우회 유도 수준을 넘어선다고 가정)
+            case CONSTRUCTION -> 0.3;           // 공사는 기본 차단(우회 유도 수준을 넘어선다고 가정)
             case TREE, ROCK -> 0.3;             // 우회 유도 강
             case FURNITURE -> 0.5;              // 우회 유도 중
             case OTHER_OBSTACLE -> 0.6;         // 약한 우회 유도
