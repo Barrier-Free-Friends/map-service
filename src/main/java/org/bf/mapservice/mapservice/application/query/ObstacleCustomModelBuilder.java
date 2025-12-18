@@ -126,7 +126,7 @@ public class ObstacleCustomModelBuilder {
 
         if (radius <= 0) {
             // 최종 fallback (서비스에서 이미 보정되지만, 혹시라도 대비)
-            radius = (o.getGeomType() == ObstacleGeometryType.POINT) ? 50 : 30;
+            radius = (o.getGeomType() == ObstacleGeometryType.POINT) ? 15 : 20;
         }
 
         double lat = g.getCoordinate().y;
@@ -183,14 +183,7 @@ public class ObstacleCustomModelBuilder {
         Geometry g = o.getGeom();
         if (g == null) return List.of();
 
-        Integer radiusMeters = o.getRadiusMeters();
-        int radius = (radiusMeters != null && radiusMeters > 0)
-                ? radiusMeters
-                : defaults.defaultRadiusMeters(o.getType());
-
-        if (radius <= 0) {
-            radius = (o.getGeomType() == ObstacleGeometryType.POINT) ? 50 : 30;
-        }
+        int radius = defaults.resolveRadiusMeters(o);
 
         double lat = g.getCoordinate().y;
         double metersPerDegLat = 111_320.0;
@@ -199,26 +192,25 @@ public class ObstacleCustomModelBuilder {
         double degLat = radius / metersPerDegLat;
         double degLon = radius / metersPerDegLon;
 
-        // POINT는 원(다각형) 1개 반환
         if (o.getGeomType() == ObstacleGeometryType.POINT) {
-            Coordinate c = g.getCoordinate();
-            return List.of(circlePolygon(c, degLon, degLat, 24));
+            return List.of(circlePolygon(g.getCoordinate(), degLon, degLat, 24));
         }
 
-        // LINESTRING 등은 buffer로 Polygon/MultiPolygon 가능
         double deg = (degLat + degLon) / 2.0;
         Geometry buffered = g.buffer(deg);
 
         if (buffered instanceof Polygon p) return List.of(p);
 
-        if (buffered instanceof MultiPolygon mp && mp.getNumGeometries() > 0) {
+        if (buffered instanceof MultiPolygon mp) {
             List<Polygon> out = new ArrayList<>();
             for (int i = 0; i < mp.getNumGeometries(); i++) {
-                Geometry gi = mp.getGeometryN(i);
-                if (gi instanceof Polygon pi) out.add(pi);
+                if (mp.getGeometryN(i) instanceof Polygon pi) {
+                    out.add(pi);
+                }
             }
             return out;
         }
+
         return List.of();
     }
 
