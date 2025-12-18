@@ -1,5 +1,7 @@
 package org.bf.mapservice.mapservice.infrastructure.graphhopper.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Map;
 
@@ -9,5 +11,9 @@ public record GhRouteRequest(
         boolean points_encoded,
         boolean instructions,
         Map<String, Object> custom_model,
-        Map<String, Object> ch          // {"disable": true}
+        @JsonProperty("ch.disable")
+        Boolean chDisable,
+
+        @JsonProperty("lm.disable")
+        Boolean lmDisable          // {"disable": true}
 ) {}
