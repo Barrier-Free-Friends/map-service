@@ -1,6 +1,10 @@
 spring:
   application:
     name: map-service
+  logging:
+    level:
+      org.springframework.kafka: DEBUG
+      org.apache.kafka.clients.consumer: INFO
 
   datasource:
     driver-class-name: org.postgresql.Driver

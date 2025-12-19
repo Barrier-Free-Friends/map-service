@@ -2,13 +2,14 @@ package org.bf.mapservice.mapservice.presentation.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.bf.mapservice.mapservice.application.command.CreateObstacleCommand;
+import org.bf.mapservice.mapservice.application.command.CreateObstacleCommandDto;
 import org.bf.mapservice.mapservice.application.command.ObstacleCommandService;
 import org.bf.mapservice.mapservice.application.query.ObstacleCustomModelBuilder;
 import org.bf.mapservice.mapservice.domain.entity.ObstacleGeometryType;
 import org.bf.mapservice.mapservice.infrastructure.persistence.ObstacleQueryDaoImpl;
 import org.bf.mapservice.mapservice.presentation.controller.dto.CreateObstacleRequestDto;
 import org.bf.mapservice.mapservice.presentation.controller.dto.ObstacleFeatureCollectionDto;
+import org.bf.mapservice.mapservice.presentation.docs.ObstaclesApiDoc;
 import org.locationtech.jts.geom.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/obstacles")
 @RequiredArgsConstructor
-public class ObstaclesController {
+public class ObstaclesController implements ObstaclesApiDoc {
 
     private static final GeometryFactory GF = new GeometryFactory(new PrecisionModel(), 4326);
 
@@ -31,14 +32,15 @@ public class ObstaclesController {
     public Long create(@RequestBody @Valid CreateObstacleRequestDto req) {
         Geometry geom = toGeometry(req);
 
-        var cmd = new CreateObstacleCommand(
+        var cmd = new CreateObstacleCommandDto(
                 geom,
                 req.geomType(),
                 req.type(),
                 req.severity(),
                 req.radiusMeters(),
                 req.startsAt(),
-                req.endsAt()
+                req.endsAt(),
+                req.userId()
         );
         return commandService.create(cmd);
     }
@@ -50,10 +52,10 @@ public class ObstaclesController {
 
     @GetMapping
     public ObstacleFeatureCollectionDto getActiveObstacles(
-            @RequestParam double minLon,
-            @RequestParam double minLat,
-            @RequestParam double maxLon,
-            @RequestParam double maxLat
+        @RequestParam Double minLon,
+        @RequestParam Double minLat,
+        @RequestParam Double maxLon,
+        @RequestParam Double maxLat
     ) {
         var obstacles = obstacleQueryDaoImpl.findActiveObstaclesInEnvelope(
                 minLon, minLat, maxLon, maxLat,

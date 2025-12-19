@@ -18,7 +18,7 @@ public class ObstacleCommandService {
     }
 
     @Transactional
-    public Long create(CreateObstacleCommand cmd) {
+    public Long create(CreateObstacleCommandDto cmd) {
         // 1) severity 보정
         Severity severity = cmd.severity();
         if (severity == null) {
@@ -35,7 +35,7 @@ public class ObstacleCommandService {
             radius = (def > 0) ? def : null;
         }
         if (radius == null || radius <= 0) {
-            radius = (cmd.geomType() == ObstacleGeometryType.POINT) ? 50 : 30;
+            radius = (cmd.geomType() == ObstacleGeometryType.POINT) ? 15 : 20;
         }
 
         Obstacle obstacle = new Obstacle(
@@ -47,7 +47,8 @@ public class ObstacleCommandService {
                 radius,
                 cmd.startsAt(),
                 cmd.endsAt(),
-                50
+                50,
+                cmd.userId()
         );
 
         return obstacleRepository.save(obstacle).getId();

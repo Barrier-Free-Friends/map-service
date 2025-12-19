@@ -30,26 +30,30 @@ public class RouteApplicationService {
 
     public RouteDetailResponseDto findRouteDetail(RouteRequestDto req) {
 
-        // 1) bbox
+
+        // 1) bbox 장애물 조회 범위 만들기
         var bbox = BboxUtil.envelopeWithMarginMeters(
                 req.startLatitude(), req.startLongitude(),
                 req.endLatitude(), req.endLongitude(),
                 800
         );
 
+        // bbox 안의 “활성 장애물” 조회
         var obstacles = obstacleQueryDaoImpl.findActiveObstaclesInEnvelope(
                 bbox.minLon(), bbox.minLat(), bbox.maxLon(), bbox.maxLat(),
                 OffsetDateTime.now()
         );
 
-        // 2) custom_model
+        // 2) custom_model 생성
         var customModel = obstacleCustomModelBuilder.buildCustomModel(
                 obstacles, req.mobilityType(), obstaclePolicy
         );
 
+        // custom_model 사용 여부와 profile 결정
         boolean useCustom = (customModel != null);
         String profile = toProfile(req.mobilityType(), useCustom);
 
+        // GraphHopper 요청 DTO 만들기
         GhRouteRequest ghReq = new GhRouteRequest(
                 profile,
                 List.of(
@@ -59,7 +63,8 @@ public class RouteApplicationService {
                 false,
                 false,
                 customModel,
-                Map.of("disable", useCustom)
+                useCustom,   // ch.disable
+                useCustom    // lm.disable (필요 없으면 false로)
         );
 
         GhRouteResponse res = ghClient.routePost(ghReq);
@@ -88,19 +93,23 @@ public class RouteApplicationService {
                 )
         );
 
-        boolean barrierFree =
-                req.mobilityType() == MobilityType.WHEELCHAIR
-                        || req.mobilityType() == MobilityType.STROLLER
-                        || req.mobilityType() == MobilityType.ELDERLY;
+        boolean barrierFree = req.mobilityType().isBarrierSensitive();
 
-        boolean fullyAccessible =
-                !(barrierFree && obstacles != null && !obstacles.isEmpty());
+        boolean fullyAccessible = true;
+        String firstBlockedReason =  "NONE";
 
-        Integer accessibleUntilSeq =
-                fullyAccessible ? null : 0;
+        if(obstacles != null){
+            for (var o : obstacles){
+                Decision d = obstaclePolicy.decide(req.mobilityType(), o.getType(), o.getSeverity());
+                if(d.blocked() || d.priorityMultiply() <= 0.0){
+                    fullyAccessible = false;
+                    firstBlockedReason =o.getType().name();
+                    break;
+                }
+            }
+        }
 
-        String firstBlockedReason =
-                fullyAccessible ? "NONE" : "STAIRS";
+        Integer accessibleUntilSeq = fullyAccessible ? null : 0;
 
         return new RouteDetailResponseDto(
                 path.distance(),
