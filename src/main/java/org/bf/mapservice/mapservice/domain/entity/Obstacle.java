@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.bf.global.domain.Auditable;
 import org.locationtech.jts.geom.Geometry;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "obstacle")
@@ -56,6 +57,8 @@ public class Obstacle extends Auditable {
     @Column(name = "confidence", nullable = false)
     private int confidence;
 
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
     //JPA 전용이라 외부에서 new 금지
     protected Obstacle() {}
 
@@ -69,7 +72,8 @@ public class Obstacle extends Auditable {
             Integer radiusMeters,
             OffsetDateTime startsAt,
             OffsetDateTime endsAt,
-            int confidence
+            int confidence,
+            UUID userId
     ) {
         this.geom = geom;
         this.geomType = geomType;
@@ -80,6 +84,7 @@ public class Obstacle extends Auditable {
         this.startsAt = startsAt;
         this.endsAt = endsAt;
         this.confidence = confidence;
+        this.userId = userId;
     }
 
     public Long getId() { return id; }
@@ -88,6 +93,7 @@ public class Obstacle extends Auditable {
     public ObstacleType getType() { return type; }
     public Severity getSeverity() { return severity; }
     public Integer getRadiusMeters() { return radiusMeters; }
+    public UUID getUserId() { return userId; }
 
     //상태 변경의 의미를 코드에 남김 나중에 규칙 추가 가능
     public void resolve() { this.status = ObstacleStatus.RESOLVED; }

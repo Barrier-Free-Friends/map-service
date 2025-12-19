@@ -1,10 +1,8 @@
 package org.bf.mapservice.mapservice.presentation.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.bf.mapservice.mapservice.application.command.CreateObstacleCommand;
+import org.bf.mapservice.mapservice.application.command.CreateObstacleCommandDto;
 import org.bf.mapservice.mapservice.application.command.ObstacleCommandService;
 import org.bf.mapservice.mapservice.application.query.ObstacleCustomModelBuilder;
 import org.bf.mapservice.mapservice.domain.entity.ObstacleGeometryType;
@@ -34,14 +32,15 @@ public class ObstaclesController implements ObstaclesApiDoc {
     public Long create(@RequestBody @Valid CreateObstacleRequestDto req) {
         Geometry geom = toGeometry(req);
 
-        var cmd = new CreateObstacleCommand(
+        var cmd = new CreateObstacleCommandDto(
                 geom,
                 req.geomType(),
                 req.type(),
                 req.severity(),
                 req.radiusMeters(),
                 req.startsAt(),
-                req.endsAt()
+                req.endsAt(),
+                req.userId()
         );
         return commandService.create(cmd);
     }

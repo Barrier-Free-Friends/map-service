@@ -96,7 +96,8 @@ public class ObstacleCustomModelBuilder {
                 feature.put("properties", Map.of(
                         "obstacleId", o.getId(),
                         "type", o.getType().name(),
-                        "createdAt", o.getCreatedAt() != null ? o.getCreatedAt().toString() : null
+                        "createdAt", o.getCreatedAt() != null ? o.getCreatedAt().toString() : null,
+                        "userId", o.getUserId() != null ? o.getUserId().toString() : null
                 ));
                 features.add(feature);
             }
