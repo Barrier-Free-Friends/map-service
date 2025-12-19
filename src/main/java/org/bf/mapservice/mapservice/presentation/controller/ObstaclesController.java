@@ -60,7 +60,7 @@ public class ObstaclesController {
                 OffsetDateTime.now()
         );
 
-        // FeatureCollection(Map)에서 features만 꺼내서 내려줌
+        // FeatureCollection(Map)에서 features만 꺼내서 내려줌d
         Map<String, Object> fc = obstacleCustomModelBuilder.buildAreasOnly(obstacles);
 
         @SuppressWarnings("unchecked")
