@@ -6,14 +6,16 @@ import org.bf.mapservice.mapservice.domain.entity.Severity;
 import org.locationtech.jts.geom.Geometry;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
-public record CreateObstacleCommand(
+public record CreateObstacleCommandDto(
         Geometry geom,
         ObstacleGeometryType geomType,
         ObstacleType type,
         Severity severity,
         Integer radiusMeters,
         OffsetDateTime startsAt,
-        OffsetDateTime endsAt
+        OffsetDateTime endsAt,
+        UUID userId
 ) {}
 
