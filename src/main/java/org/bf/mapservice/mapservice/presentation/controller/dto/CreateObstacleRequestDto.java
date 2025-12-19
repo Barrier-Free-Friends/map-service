@@ -8,6 +8,7 @@ import org.bf.mapservice.mapservice.domain.entity.Severity;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Schema(description = "장애물 생성 요청 DTO")
 public record CreateObstacleRequestDto(
@@ -37,5 +38,8 @@ public record CreateObstacleRequestDto(
         OffsetDateTime startsAt,
 
         @Schema(description = "종료 시각(ISO-8601)", example = "2025-12-18T18:00:00+09:00")
-        OffsetDateTime endsAt
+        OffsetDateTime endsAt,
+
+        @Schema(description = "장애물 등록한 유저의 ID", example = "UUID")
+        UUID userId
 ) {}

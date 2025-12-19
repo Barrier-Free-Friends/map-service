@@ -1,6 +1,10 @@
 spring:
   application:
     name: map-service
+  logging:
+    level:
+      org.springframework.kafka: DEBUG
+      org.apache.kafka.clients.consumer: INFO
 
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -45,8 +49,6 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
-    listener:
-      auto-startup: false
 
 eureka:
   instance:
