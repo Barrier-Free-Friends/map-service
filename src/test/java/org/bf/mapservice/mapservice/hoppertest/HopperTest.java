@@ -22,7 +22,9 @@ public class HopperTest {
                 false,
                 Map.of("priority", List.of()),
                 true,
-                true
+                true,
+                List.of("motorway", "ferry") // ✅ 1차는 엄격하게(원하면 빈 리스트로 시작 가능)
+
         );
 
         String json = mapper
