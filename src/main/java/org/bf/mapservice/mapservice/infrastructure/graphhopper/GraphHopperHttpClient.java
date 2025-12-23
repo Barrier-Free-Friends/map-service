@@ -1,121 +1,115 @@
 package org.bf.mapservice.mapservice.infrastructure.graphhopper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.bf.global.infrastructure.exception.CustomException;
+import org.bf.mapservice.mapservice.domain.exception.MapErrorCode;
 import org.bf.mapservice.mapservice.infrastructure.graphhopper.dto.GhRouteRequest;
 import org.bf.mapservice.mapservice.infrastructure.graphhopper.dto.GhRouteResponse;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.UUID;
 
 @Component
 @Slf4j
 public class GraphHopperHttpClient {
 
     private final RestClient restClient;
-    private final ObjectMapper objectMapper;
 
     public GraphHopperHttpClient(
-            @Value("${graphhopper.base-url}") String baseUrl,
-            ObjectMapper objectMapper
+            @Value("${graphhopper.base-url}") String baseUrl
     ) {
+        SimpleClientHttpRequestFactory factory =
+                new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(2_000);
+        factory.setReadTimeout(3_000);
+
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
+                .requestFactory(factory)
                 .build();
-        this.objectMapper = objectMapper;
     }
 
     /**
-     *  서비스용: POST /route (custom_model, areas, ch.disable 등 적용 가능)
+     * 서비스용: POST /route (custom_model, areas, ch.disable 등 적용 가능)
      */
     public GhRouteResponse routePost(GhRouteRequest request) {
-        log.info("[GH] POST /route profile={} points={} custom_model={} ch.disable={} lm.disable={}",
-                request.profile(),
-                request.points() != null ? request.points().size() : 0,
-                request.custom_model() != null,
-                request.chDisable(),
-                request.lmDisable());
+        String requestId = UUID.randomUUID().toString();
+        MDC.put("requestId", requestId);
 
         try {
-            String json = objectMapper
-                    .writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(request);
+            log.info("[GH][REQ] profile={} points={} chDisable={} lmDisable={}",
+                    request.profile(),
+                    request.points() != null ? request.points().size() : 0,
+                    request.chDisable(),
+                    request.lmDisable()
+            );
 
-            log.info("[GH][REQUEST JSON]\n{}", json);
+            GhRouteResponse res = restClient.post()
+                    .uri("/route")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, resp) -> {
+                        String body = new String(
+                                resp.getBody().readAllBytes(),
+                                StandardCharsets.UTF_8
+                        );
+
+                        log.error("[GH][HTTP_ERROR] status={} body={}",
+                                resp.getStatusCode(), body);
+
+                        if (body.contains("PointOutOfBoundsException")) {
+                            throw new CustomException(
+                                    MapErrorCode.ROUTE_OUT_OF_SERVICE_AREA
+                            );
+                        }
+
+                        throw new CustomException(
+                                MapErrorCode.ROUTE_NOT_FOUND
+                        );
+                    })
+                    .body(GhRouteResponse.class);
+
+            // 정상 응답 but 경로 없음
+            if (res == null || res.paths() == null || res.paths().isEmpty()) {
+                log.warn("[GH][NO_PATH] profile={} points={}",
+                        request.profile(), request.points());
+
+                throw new CustomException(
+                        MapErrorCode.ROUTE_NOT_SUITABLE_MOBILITY
+                );
+            }
+
+            var p = res.paths().get(0);
+            log.info("[GH][OK] distance={}m time={}ms",
+                    p.distance(), p.time());
+
+            return res;
+
+        } catch (CustomException e) {
+            // 도메인 의미가 있는 에러
+            log.warn("[GH][DOMAIN_ERROR] {}", e.getMessage());
+            throw e;
 
         } catch (Exception e) {
-            log.warn("[GH] Failed to serialize request", e);
+            // 네트워크 / 타임아웃 / 역직렬화
+            log.error("[GH][SYSTEM_ERROR] profile={} points={}",
+                    request.profile(), request.points(), e);
+
+            throw new CustomException(
+                    MapErrorCode.ROUTE_ENGINE_ERROR
+            );
+        } finally {
+            MDC.clear();
         }
-
-        GhRouteResponse res = restClient.post()
-                .uri("/route")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(request)
-                .retrieve()
-                .onStatus(s -> s.isError(), (req, resp) -> {
-                    String body = new String(resp.getBody().readAllBytes());
-                    log.error("[GH] ERROR status={} body={}", resp.getStatusCode(), body);
-                })
-                .body(GhRouteResponse.class);
-        log.info("[GH] request={}", request);
-
-        if (res != null && res.paths() != null && !res.paths().isEmpty()) {
-            var p = res.paths().get(0);
-            log.info("[GH] OK distance={}m time={}ms", p.distance(), p.time());
-        } else {
-            log.warn("[GH] EMPTY RESPONSE");
-        }
-        return res;
-    }
-
-    /**
-     * (디버그/임시용) GET /route
-     * - avoid 같은 query param 테스트에만 사용 권장
-     */
-    public GhRouteResponse routeGet(
-            String profile,
-            double startLat, double startLon,
-            double endLat, double endLon,
-            String avoid,
-            boolean chDisable
-    ) {
-        log.info("[GH] GET /route profile={} avoid={} ch.disable={} start=({}, {}) end=({}, {})",
-                profile, avoid, chDisable, startLat, startLon, endLat, endLon);
-
-        GhRouteResponse res = restClient.get()
-                .uri(uriBuilder -> {
-                    var b = uriBuilder
-                            .path("/route")
-                            .queryParam("profile", profile)
-                            .queryParam("points_encoded", false)
-                            // GH GET point=lat,lon
-                            .queryParam("point", startLat + "," + startLon)
-                            .queryParam("point", endLat + "," + endLon);
-
-                    if (avoid != null && !avoid.isBlank()) {
-                        b = b.queryParam("avoid", avoid);
-                    }
-                    if (chDisable) {
-                        b = b.queryParam("ch.disable", true);
-                    }
-                    return b.build();
-                })
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .body(GhRouteResponse.class);
-
-        if (res != null && res.paths() != null && !res.paths().isEmpty()) {
-            var p = res.paths().get(0);
-            log.info("[GH] OK distance={}m time={}ms", p.distance(), p.time());
-        } else {
-            log.warn("[GH] EMPTY RESPONSE");
-        }
-        return res;
-    }
-
-    public GhRouteResponse routeGet(String profile, double startLat, double startLon, double endLat, double endLon) {
-        return routeGet(profile, startLat, startLon, endLat, endLon, null, false);
     }
 }
