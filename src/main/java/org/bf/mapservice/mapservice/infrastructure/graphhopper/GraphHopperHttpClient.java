@@ -59,23 +59,21 @@ public class GraphHopperHttpClient {
                     .body(request)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, resp) -> {
-                        String body = new String(
-                                resp.getBody().readAllBytes(),
-                                StandardCharsets.UTF_8
-                        );
+                        String body = "";
+                        try {
+                            body = new String(resp.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                        } catch (Exception ignored) {}
 
-                        log.error("[GH][HTTP_ERROR] status={} body={}",
-                                resp.getStatusCode(), body);
+                        log.error("[GH][HTTP_ERROR] status={} body={}", resp.getStatusCode(), body);
 
+                        // 여기서 반드시 throw로 흐름 종료
                         if (body.contains("PointOutOfBoundsException")) {
-                            throw new CustomException(
-                                    MapErrorCode.ROUTE_OUT_OF_SERVICE_AREA
-                            );
+                            throw new CustomException(MapErrorCode.ROUTE_OUT_OF_SERVICE_AREA);
                         }
-
-                        throw new CustomException(
-                                MapErrorCode.ROUTE_NOT_FOUND
-                        );
+                        if (resp.getStatusCode().is5xxServerError()) {
+                            throw new CustomException(MapErrorCode.ROUTE_ENGINE_ERROR);
+                        }
+                        throw new CustomException(MapErrorCode.ROUTE_NOT_FOUND);
                     })
                     .body(GhRouteResponse.class);
 
