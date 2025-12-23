@@ -64,8 +64,10 @@ public class RouteApplicationService {
                 false,
                 customModel,
                 useCustom,   // ch.disable
-                useCustom    // lm.disable (필요 없으면 false로)
+                useCustom,   // lm.disable
+                List.of("motorway", "ferry") // ✅ 1차는 엄격하게(원하면 빈 리스트로 시작 가능)
         );
+
 
         GhRouteResponse res = ghClient.routePost(ghReq);
 
