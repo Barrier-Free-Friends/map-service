@@ -29,7 +29,7 @@ public class GraphHopperHttpClient {
         SimpleClientHttpRequestFactory factory =
                 new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(2_000);
-        factory.setReadTimeout(3_000);
+        factory.setReadTimeout(8_000);
 
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
